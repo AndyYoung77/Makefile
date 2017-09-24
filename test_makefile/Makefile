@@ -1,18 +1,39 @@
-objs := a.o b.o
+CROSS_COMPILE =
+AS			= $(CROSS_COMPILE)as
+LD			= $(CROSS_COMPILE)ld
+CC			= $(CROSS_COMPILE)cc
+CPP			= $(CC) -E
+AR 			= $(CROSS_COMPILE)ar
+NM			= $(CROSS_COMPILE)nm
 
-test:$(objs)
-	gcc -o test $^
+STRIP		= $(CROSS_COMPILE)strip
+OBJCOPY = $(CROSS_COMPILE)objcopy
+OBJDUMP	= $(CROSS_COMPILE)objdump
 
-# .a.o.d .b.o.d
-dep_files := $(foreach f,$(objs),.$(f).d)#改名字为. .d
-dep_files := $(wildchar $(dep_files))#清除不存在的
-	
-ifneq ($(dep_files),)
-	include $(dep_files)#包含非空的文件
-endif
-	
-%.o:%.c
-	gcc -Wp,-MD,$@.d -c -o $@ $<
+export AS LD CC CPP AR NM
+export STRIP OBJCOPY 
+
+TOPDIR := $(shell pwd)
+
+CFLAGS := -Wall -O2 -g
+CFLAGS += -I $(TOPDIR)/include
+
+LDFLAGS := -lm
+
+export CFLAGS LDFLAGS TOPDIR
+
+TARGET := show_file
+
+obj-y += main.o
+obj-y += font/
+obj-y += display/
+
+all:
+	$(warning $(obj-y))
+	make -C ./ -f $(TOPDIR)/Makefile.build
+	$(CC) $(LDFLAGS) -o $(TARGET) built-in.o
 	
 clean:
-	rm *.o *.d test
+	-rm -rf $(shell find -name "*.o")
+	-rm -rf $(shell find -name "*.d")
+	-rm -rf $(TARGET)
